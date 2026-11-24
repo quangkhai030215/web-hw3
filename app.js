@@ -1,6 +1,5 @@
 
-// app.js : 영화 보드 기능
-// 검색, 필터, 정렬, 좋아요, 상세 정보
+// app.js : 영화 배열 함수와 DOM 이벤트
 // 웹개발기초 실습과제 #3
 
 // 1. 영화 배열을 다루는 함수
@@ -10,6 +9,7 @@ const average = list => {
     if (list.length === 0) return 0;
 
     let sum = 0;
+
     for (const m of list) {
         sum += m.rating;
     }
@@ -72,7 +72,6 @@ const countOutput = document.getElementById("count");
 const likeCountOutput = document.getElementById("likeCount");
 const averageOutput = document.getElementById("average");
 const bestOutput = document.getElementById("best");
-
 const emptyOutput = document.getElementById("empty");
 
 const detailDialog = document.getElementById("detail");
@@ -82,12 +81,18 @@ const closeDetail = document.getElementById("closeDetail");
 
 // 3. 좋아요 데이터 저장하기
 
-const STORAGE_KEY = "liked";
+const STORAGE_KEY = "movie-board-liked";
 
 let likedIds = [];
 
 try {
-    likedIds = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+
+    if (Array.isArray(saved)) {
+        likedIds = saved.filter(id =>
+            movies.some(m => m.id === id)
+        );
+    }
 } catch (error) {
     likedIds = [];
 }
@@ -97,7 +102,7 @@ const saveLiked = () => {
 };
 
 
-// 4. 영화 검색 함수
+// 4. 검색 함수
 
 const searchMovies = (list, keyword) => {
     const q = keyword.trim().toLowerCase();
@@ -155,7 +160,7 @@ const getView = () => {
     // 검색
     result = searchMovies(result, searchInput.value);
 
-    // 종류 필터
+    // 영화 종류 필터
     const selectedType = typeFilter.value;
 
     if (selectedType !== "all") {
@@ -187,49 +192,66 @@ const renderCards = list => {
 
         const isLiked = likedIds.includes(m.id);
 
-        card.innerHTML = `
-            <div class="poster-wrap">
+        const poster = document.createElement("img");
+        poster.className = "poster";
+        poster.src = posterUrl(m.poster);
+        poster.alt = m.title;
+        poster.loading = "lazy";
 
-                <img
-                    class="poster"
-                    src="${posterUrl(m.poster)}"
-                    alt="${m.title}"
-                    loading="lazy"
-                    onerror="this.src='https://placehold.co/400x600?text=No+Poster'"
-                >
+        // 포스터가 없거나 오류가 발생하면 대체 이미지
+        poster.addEventListener("error", () => {
+            poster.src = "https://placehold.co/400x600?text=No+Poster";
+            poster.classList.add("poster-error");
+        }, { once: true });
 
-                ${m.rank ? `<span class="rank">TOP ${m.rank}</span>` : ""}
+        const posterWrap = document.createElement("div");
+        posterWrap.className = "poster-wrap";
+        posterWrap.appendChild(poster);
 
-                ${m.rating >= 8 ? `<span class="badge">HOT</span>` : ""}
+        if (m.rank) {
+            const rank = document.createElement("span");
+            rank.className = "rank";
+            rank.textContent = `TOP ${m.rank}`;
+            posterWrap.appendChild(rank);
+        }
 
-            </div>
+        if (m.rating >= 8) {
+            const badge = document.createElement("span");
+            badge.className = "badge";
+            badge.textContent = "HOT";
+            posterWrap.appendChild(badge);
+        }
 
-            <div class="info">
+        const info = document.createElement("div");
+        info.className = "info";
 
-                <h3>${m.title}</h3>
+        const title = document.createElement("h3");
+        title.textContent = m.title;
 
-                <p>📅 ${m.year}년</p>
+        const year = document.createElement("p");
+        year.textContent = `📅 ${m.year}년`;
 
-                <p>⭐ 평점 ${m.rating}</p>
+        const rating = document.createElement("p");
+        rating.textContent = `⭐ 평점 ${m.rating}`;
 
-                <p>${m.overview}</p>
+        const overview = document.createElement("p");
+        overview.className = "card-overview";
+        overview.textContent = m.overview;
 
-                <button
-                    type="button"
-                    class="like ${isLiked ? "liked" : ""}"
-                    aria-label="좋아요"
-                    aria-pressed="${isLiked}"
-                >
-                    ${isLiked ? "♥" : "♡"}
-                </button>
+        const likeButton = document.createElement("button");
+        likeButton.type = "button";
+        likeButton.className = `like ${isLiked ? "liked" : ""}`;
+        likeButton.dataset.action = "like";
+        likeButton.setAttribute("aria-label", "좋아요");
+        likeButton.setAttribute("aria-pressed", isLiked);
+        likeButton.textContent = isLiked ? "♥" : "♡";
 
-            </div>
-        `;
+        info.append(title, year, rating, overview, likeButton);
+        card.append(posterWrap, info);
 
         board.appendChild(card);
     }
 
-    // 검색 결과가 없는 경우
     emptyOutput.style.display = list.length === 0 ? "block" : "none";
 };
 
@@ -261,54 +283,88 @@ const refresh = () => {
 };
 
 
-// 10. 상세 정보 열기
+// 10. 상세 정보 표시하기
 
 const openDetail = id => {
     const movie = movies.find(m => m.id === id);
 
     if (!movie) return;
 
-    detailBody.innerHTML = `
-        <div class="detail">
+    detailBody.innerHTML = "";
 
-            <img
-                src="${posterUrl(movie.poster)}"
-                alt="${movie.title}"
-                onerror="this.src='https://placehold.co/400x600?text=No+Poster'"
-            >
+    const detail = document.createElement("div");
+    detail.className = "detail";
 
-            <div>
-                <h2>${movie.title}</h2>
+    const poster = document.createElement("img");
+    poster.className = "detail-poster";
+    poster.src = posterUrl(movie.poster);
+    poster.alt = movie.title;
 
-                <dl>
-                    <dt>개봉 연도</dt>
-                    <dd>${movie.year}</dd>
+    poster.addEventListener("error", () => {
+        poster.src = "https://placehold.co/400x600?text=No+Poster";
+    }, { once: true });
 
-                    <dt>개봉일</dt>
-                    <dd>${movie.date}</dd>
+    const content = document.createElement("div");
+    content.className = "detail-content";
 
-                    <dt>평점</dt>
-                    <dd>⭐ ${movie.rating}</dd>
+    const title = document.createElement("h2");
+    title.textContent = movie.title;
 
-                    <dt>소개</dt>
-                    <dd>${movie.overview}</dd>
+    const type = document.createElement("p");
+    type.textContent = movie.type === "mine"
+        ? "🎬 내가 고른 영화"
+        : "🏆 박스오피스";
 
-                    <dt>개봉 후 경과 연도</dt>
-                    <dd>${yearsSince(movie.year)}년</dd>
+    const year = document.createElement("p");
+    year.textContent = `개봉 연도: ${movie.year}년`;
 
-                    <dt>영화 종류</dt>
-                    <dd>${movie.type === "mine" ? "내가 고른 영화" : "박스오피스"}</dd>
-                </dl>
-            </div>
+    const date = document.createElement("p");
+    date.textContent = `개봉일: ${movie.date}`;
 
-        </div>
-    `;
+    const rating = document.createElement("p");
+    rating.textContent = `⭐ 평점: ${movie.rating}`;
+
+    const rank = document.createElement("p");
+    rank.textContent = movie.rank
+        ? `🏅 순위: ${movie.rank}위`
+        : "순위 정보 없음";
+
+    const audience = document.createElement("p");
+    audience.textContent = movie.audience
+        ? `관객 수: ${movie.audience.toLocaleString()}명`
+        : "관객 수 정보 없음";
+
+    const elapsed = document.createElement("p");
+    elapsed.textContent = `개봉 후 경과 연도: ${yearsSince(movie.year)}년`;
+
+    const overviewTitle = document.createElement("h3");
+    overviewTitle.textContent = "영화 소개";
+
+    const overview = document.createElement("p");
+    overview.className = "detail-overview";
+    overview.textContent = movie.overview;
+
+    content.append(
+        title,
+        type,
+        year,
+        date,
+        rating,
+        rank,
+        audience,
+        elapsed,
+        overviewTitle,
+        overview
+    );
+
+    detail.append(poster, content);
+    detailBody.appendChild(detail);
 
     detailDialog.showModal();
 };
 
 
-// 11. 이벤트 위임 - 카드 클릭과 좋아요
+// 11. 이벤트 위임 - 카드와 좋아요 버튼
 
 board.addEventListener("click", e => {
     const card = e.target.closest(".card");
@@ -331,7 +387,7 @@ board.addEventListener("click", e => {
         return;
     }
 
-    // 카드 클릭 시 상세 정보
+    // 카드 또는 포스터 클릭 시 상세 정보
     openDetail(id);
 });
 
@@ -346,7 +402,7 @@ searchInput.addEventListener("input", refresh);
 sortSelect.addEventListener("change", refresh);
 
 
-// 14. 종류 필터 이벤트
+// 14. 영화 종류 필터 이벤트
 
 typeFilter.addEventListener("change", refresh);
 
@@ -367,6 +423,7 @@ closeDetail.addEventListener("click", () => {
     detailDialog.close();
 });
 
+// dialog 바깥 영역 클릭 시 닫기
 detailDialog.addEventListener("click", e => {
     if (e.target === detailDialog) {
         detailDialog.close();

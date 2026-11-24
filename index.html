@@ -5,12 +5,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>내 영화 보드</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="style.css">
 
@@ -21,7 +21,7 @@
 <body>
 
     <header class="top">
-        <h1> 내 영화 보드</h1>
+        <h1>🎬 내 영화 보드</h1>
 
         <nav>
             <ul>
@@ -35,6 +35,7 @@
     <section class="hero" id="home">
         <h2>나만의 영화 컬렉션</h2>
         <p>내가 좋아하는 영화와 박스오피스 영화를 한눈에 확인해 보세요.</p>
+        <a href="#boardSection" class="hero-link">영화 보러 가기</a>
     </section>
 
     <main id="boardSection">
@@ -47,7 +48,7 @@
                 aria-label="영화 검색"
             >
 
-            <select id="typeFilter" aria-label="영화 종류 선택">
+            <select id="typeFilter" aria-label="영화 종류">
                 <option value="all">전체 영화</option>
                 <option value="mine">내가 고른 영화</option>
                 <option value="boxoffice">박스오피스</option>
@@ -64,14 +65,29 @@
         </section>
 
         <section class="stats">
-            <p>영화 수: <strong id="count">0</strong>편</p>
-            <p>좋아요: <strong id="likeCount">0</strong>개</p>
-            <p>평균 평점: <strong id="average">0</strong></p>
-            <p>최고 평점: <strong id="best">-</strong></p>
+            <div class="stat">
+                <span>전체 영화</span>
+                <strong id="count">0</strong>
+            </div>
+
+            <div class="stat">
+                <span>좋아요</span>
+                <strong id="likeCount">0</strong>
+            </div>
+
+            <div class="stat">
+                <span>평균 평점</span>
+                <strong id="average">0</strong>
+            </div>
+
+            <div class="stat">
+                <span>최고 평점 영화</span>
+                <strong id="best">-</strong>
+            </div>
         </section>
 
         <section class="movie-section">
-            <h2> Movie Collection</h2>
+            <h2>🎥 Movie Collection</h2>
 
             <div class="board" id="board"></div>
 
@@ -84,7 +100,7 @@
 
     <section id="about">
         <h2>About</h2>
-        <p>내가 좋아하는 영화와 다양한 영화를 소개하는 영화 보드입니다.</p>
+        <p>내가 좋아하는 영화와 다양한 영화를 소개하는 나만의 영화 보드입니다.</p>
     </section>
 
     <footer>
@@ -95,6 +111,7 @@
         <button type="button" id="closeDetail" class="close-detail">
             ✕ 닫기
         </button>
+
         <div id="detailBody"></div>
     </dialog>
 
