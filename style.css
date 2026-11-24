@@ -10,8 +10,6 @@
     --gap: 20px;
 }
 
-
-
 * {
     box-sizing: border-box;
 }
@@ -39,7 +37,6 @@ h3,
 footer {
     color: #fff;
 }
-
 
 .top {
     display: flex;
@@ -80,13 +77,10 @@ nav a:hover {
     color: var(--accent);
 }
 
-
-
 .hero {
     background-image:
         linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
         url("https://images.unsplash.com/photo-1610116306796-6fea9f4fae38?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D");
-
     background-size: cover;
     background-position: center;
     min-height: 40vh;
@@ -103,8 +97,6 @@ nav a:hover {
     font-size: 2rem;
 }
 
-
-
 #out {
     color: var(--text);
     background: rgba(0, 0, 0, 0.2);
@@ -112,8 +104,6 @@ nav a:hover {
     border-radius: 8px;
     white-space: pre-wrap;
 }
-
-
 
 .toolbar {
     display: flex;
@@ -134,7 +124,7 @@ nav a:hover {
     font-family: var(--font-body);
 }
 
-.toolbar input {
+.toolbar input[type="search"] {
     flex: 1;
     min-width: 180px;
 }
@@ -143,6 +133,32 @@ nav a:hover {
     margin: 0;
 }
 
+.toolbar fieldset {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid #52627a;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin: 0;
+}
+
+.toolbar fieldset legend {
+    padding: 0 5px;
+    color: #fff;
+}
+
+.toolbar fieldset label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+
+.toolbar fieldset input {
+    accent-color: var(--accent);
+}
 
 section {
     margin-bottom: 36px;
@@ -152,15 +168,11 @@ section > h2 {
     font-family: var(--font-title);
 }
 
-
-
 .board {
     display: grid;
     grid-template-columns: 1fr;
     gap: var(--gap);
 }
-
-
 
 .card {
     border-radius: 12px;
@@ -171,6 +183,7 @@ section > h2 {
     transition: transform 0.3s, box-shadow 0.3s;
     color: var(--text);
     animation: rise 0.6s backwards;
+    cursor: pointer;
 }
 
 .card:hover {
@@ -186,6 +199,7 @@ section > h2 {
 .info h3 {
     font-size: 1rem;
     line-height: 1.5;
+    min-height: 3em;
 }
 
 .poster {
@@ -199,8 +213,6 @@ section > h2 {
     color: #b8c7dc;
     font-size: 0.9rem;
 }
-
-
 
 .badge {
     position: absolute;
@@ -219,8 +231,6 @@ section > h2 {
     color: #fff;
 }
 
-
-
 .rank {
     position: absolute;
     top: 12px;
@@ -231,6 +241,29 @@ section > h2 {
     border-radius: 999px;
     font-weight: bold;
     animation: pulse 2s infinite;
+}
+
+.audience {
+    color: #b8c7dc;
+    font-size: 0.85rem;
+}
+
+.like {
+    border: none;
+    background: none;
+    font-size: 1.5rem;
+    color: #bbb;
+    cursor: pointer;
+    transition: color 0.2s, transform 0.2s;
+    padding: 4px 8px;
+}
+
+.like:hover {
+    transform: scale(1.2);
+}
+
+.like.liked {
+    color: crimson;
 }
 
 .change.up {
@@ -257,8 +290,6 @@ section > h2 {
     content: "NEW";
 }
 
-
-
 .state-empty {
     display: none;
     color: #fff;
@@ -272,77 +303,74 @@ section > h2 {
     display: block;
 }
 
-
-
-@keyframes pulse {
-    0%,
-    100% {
-        transform: scale(1);
-    }
-
-    50% {
-        transform: scale(1.15);
-    }
-}
-
-@keyframes rise {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-}
-
-
-
-.card:nth-child(1) {
-    animation-delay: 0s;
-}
-
-.card:nth-child(2) {
-    animation-delay: 0.1s;
-}
-
-.card:nth-child(3) {
-    animation-delay: 0.2s;
-}
-
-.card:nth-child(4) {
-    animation-delay: 0.3s;
-}
-
-.card:nth-child(5) {
-    animation-delay: 0.4s;
-}
-
-.card:nth-child(6) {
-    animation-delay: 0.5s;
-}
-
-
-
 .detail {
     display: grid;
     grid-template-columns: 1fr;
     gap: var(--gap);
+    text-align: left;
 }
 
 .detail dt {
     color: var(--accent);
+    margin-top: 10px;
+}
+
+.detail dd {
+    margin: 4px 0 12px;
+    line-height: 1.7;
 }
 
 .detail img {
     width: 100%;
+    max-width: 300px;
+    border-radius: 8px;
+}
+
+#detail {
+    width: min(800px, calc(100% - 32px));
+    max-height: 85vh;
+    overflow-y: auto;
+    border: 1px solid #52627a;
+    border-radius: 14px;
+    padding: 24px;
+    background: #1a263b;
+    color: #fff;
+}
+
+#detail::backdrop {
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+}
+
+#detail h2 {
+    font-family: var(--font-title);
+    margin-top: 0;
+}
+
+#closeDetail {
+    display: block;
+    margin: 20px 0 0 auto;
+    padding: 10px 22px;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    font-family: var(--font-body);
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#closeDetail:hover {
+    filter: brightness(1.15);
 }
 
 .detail-page {
     background-image:
         linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.75)),
         url("https://i.swncdn.com/media/950w/via/images/2023/02/22/29578/29578-church-gettyimages-wwing_source_file.jpg");
-
     background-size: cover;
     min-height: 100vh;
 }
-
 
 /* Skeleton Loading */
 .skeleton {
@@ -377,7 +405,47 @@ body.is-loading .card {
     }
 }
 
+@keyframes pulse {
+    0%,
+    100% {
+        transform: scale(1);
+    }
 
+    50% {
+        transform: scale(1.15);
+    }
+}
+
+@keyframes rise {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+}
+
+.card:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.card:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.card:nth-child(3) {
+    animation-delay: 0.2s;
+}
+
+.card:nth-child(4) {
+    animation-delay: 0.3s;
+}
+
+.card:nth-child(5) {
+    animation-delay: 0.4s;
+}
+
+.card:nth-child(6) {
+    animation-delay: 0.5s;
+}
 
 @media (min-width: 600px) {
     nav ul {
@@ -408,7 +476,6 @@ body.is-loading .card {
     }
 }
 
-
 @media (prefers-color-scheme: dark) {
     .card {
         background: #1a202c;
@@ -419,21 +486,4 @@ body.is-loading .card {
         background: rgba(20, 25, 35, 0.95);
         color: #fff;
     }
-}
-
-.like {
-    border: none;
-    background: none;
-    font-size: 1.5rem;
-    color: #bbb;
-    cursor: pointer;
-    transition: color 0.2s, transform 0.2s;
-}
-
-.like:hover {
-    transform: scale(1.2);
-}
-
-.like.liked {
-    color: crimson;
 }
