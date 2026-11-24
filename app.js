@@ -1,18 +1,15 @@
 
-// app.js : 살아 움직이는 영화 보드
-// 검색, 필터, 정렬, 찜, 상세 정보
+// app.js : 영화 보드 기능
+// 검색, 필터, 정렬, 좋아요, 상세 정보
 // 웹개발기초 실습과제 #3
 
-// ========================================
-// 1. 영화 데이터 처리 함수
-// ========================================
+// 1. 영화 배열을 다루는 함수
 
-// average : 영화 배열 ⇒ 평균 평점
+// 평균 평점
 const average = list => {
     if (list.length === 0) return 0;
 
     let sum = 0;
-
     for (const m of list) {
         sum += m.rating;
     }
@@ -20,8 +17,7 @@ const average = list => {
     return sum / list.length;
 };
 
-
-// best : 영화 배열 ⇒ 최고 평점 영화
+// 최고 평점 영화
 const best = list => {
     if (list.length === 0) return null;
 
@@ -36,65 +32,36 @@ const best = list => {
     return top;
 };
 
+// 평점 기준 필터
+const filterByRating = (list, min = 0) => {
+    return list.filter(m => m.rating >= min);
+};
 
-// filterByRating : 최소 평점 이상인 영화만 필터링
-const filterByRating = (list, min) =>
-    list.filter(m => m.rating >= min);
+// 평점 기준 정렬
+const sortByRating = list => {
+    return [...list].sort((a, b) => b.rating - a.rating);
+};
 
+// 개봉 연도부터 지난 기간
+const yearsSince = year => {
+    return new Date().getFullYear() - year;
+};
 
-// sortByRating : 평점이 높은 순서로 새 배열 만들기
-const sortByRating = list =>
-    [...list].sort((a, b) => b.rating - a.rating);
-
-
-// yearsSince : 개봉일로부터 지난 연도 계산
-const yearsSince = dateStr =>
-    new Date().getFullYear() - new Date(dateStr).getFullYear();
-
-
-// posterUrl : 포스터 경로 ⇒ TMDB 이미지 주소
-const posterUrl = (path, size = "w342") => {
+// 포스터 주소 만들기
+const posterUrl = path => {
     if (!path) {
-        return "https://placehold.co/342x513/1f2b44/ffffff?text=No+Poster";
+        return "https://placehold.co/400x600?text=No+Poster";
     }
 
     if (path.startsWith("http")) {
         return path;
     }
 
-    return "https://image.tmdb.org/t/p/" + size + path;
+    return `https://image.tmdb.org/t/p/w500${path}`;
 };
 
 
-// ========================================
-// 2. localStorage : 찜 목록 저장
-// ========================================
-
-let likedIds = [];
-
-try {
-    likedIds = JSON.parse(localStorage.getItem("likedMovies")) || [];
-} catch (error) {
-    likedIds = [];
-}
-
-
-// saveLiked : 찜 목록 ⇒ localStorage 저장
-function saveLiked() {
-    localStorage.setItem("likedMovies", JSON.stringify(likedIds));
-}
-
-
-// updateLikeCount : 찜한 영화 개수 표시
-function updateLikeCount() {
-    document.getElementById("likeCount").textContent =
-        likedIds.length;
-}
-
-
-// ========================================
-// 3. DOM 요소 가져오기
-// ========================================
+// 2. DOM 요소 가져오기
 
 const board = document.getElementById("board");
 const searchInput = document.getElementById("q");
@@ -103,57 +70,108 @@ const typeFilter = document.getElementById("typeFilter");
 
 const countOutput = document.getElementById("count");
 const likeCountOutput = document.getElementById("likeCount");
+const averageOutput = document.getElementById("average");
+const bestOutput = document.getElementById("best");
+
+const emptyOutput = document.getElementById("empty");
 
 const detailDialog = document.getElementById("detail");
 const detailBody = document.getElementById("detailBody");
-const closeDetailButton = document.getElementById("closeDetail");
+const closeDetail = document.getElementById("closeDetail");
 
 
-// ========================================
-// 4. sortBy : 영화 배열, 키, 내림차순 여부
-// ========================================
+// 3. 좋아요 데이터 저장하기
 
-function sortBy(list, key, desc = true) {
-    const copy = [...list];
+const STORAGE_KEY = "liked";
 
-    copy.sort((a, b) => {
-        if (typeof a[key] === "string") {
-            return a[key].localeCompare(b[key]);
-        }
+let likedIds = [];
 
-        return a[key] - b[key];
-    });
-
-    if (desc) {
-        copy.reverse();
-    }
-
-    return copy;
+try {
+    likedIds = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+} catch (error) {
+    likedIds = [];
 }
 
+const saveLiked = () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(likedIds));
+};
 
-// ========================================
-// 5. search : 검색어로 영화 찾기
-// ========================================
 
-function search(list, keyword) {
-    const word = keyword.trim().toLowerCase();
+// 4. 영화 검색 함수
 
-    if (word === "") {
-        return [...list];
-    }
+const searchMovies = (list, keyword) => {
+    const q = keyword.trim().toLowerCase();
+
+    if (!q) return list;
 
     return list.filter(m =>
-        m.title.toLowerCase().includes(word)
+        m.title.toLowerCase().includes(q) ||
+        m.overview.toLowerCase().includes(q)
     );
-}
+};
 
 
-// ========================================
-// 6. renderCards : 영화 배열 ⇒ 카드 생성
-// ========================================
+// 5. 정렬 함수
 
-function renderCards(list) {
+const sortMovies = (list, sortValue) => {
+    const result = [...list];
+
+    switch (sortValue) {
+        case "date-desc":
+            return result.sort((a, b) =>
+                new Date(b.date) - new Date(a.date)
+            );
+
+        case "date-asc":
+            return result.sort((a, b) =>
+                new Date(a.date) - new Date(b.date)
+            );
+
+        case "rating-desc":
+            return result.sort((a, b) => b.rating - a.rating);
+
+        case "rating-asc":
+            return result.sort((a, b) => a.rating - b.rating);
+
+        case "title-asc":
+            return result.sort((a, b) =>
+                a.title.localeCompare(b.title, "ko")
+            );
+
+        case "year-desc":
+            return result.sort((a, b) => b.year - a.year);
+
+        default:
+            return result;
+    }
+};
+
+
+// 6. 검색 → 필터 → 정렬
+
+const getView = () => {
+    let result = [...movies];
+
+    // 검색
+    result = searchMovies(result, searchInput.value);
+
+    // 종류 필터
+    const selectedType = typeFilter.value;
+
+    if (selectedType !== "all") {
+        result = result.filter(m => m.type === selectedType);
+    }
+
+    // 정렬
+    result = sortMovies(result, sortSelect.value);
+
+    return result;
+};
+
+
+// 7. 영화 카드 만들기
+
+const renderCards = list => {
     board.innerHTML = "";
 
     for (const m of list) {
@@ -161,125 +179,91 @@ function renderCards(list) {
 
         card.className = "card";
         card.dataset.id = m.id;
-        card.dataset.title = m.title;
+        card.dataset.type = m.type;
 
         if (m.rating >= 8) {
             card.classList.add("hot");
         }
 
-        if (m.boxoffice) {
-            card.dataset.type = "boxoffice";
-        } else {
-            card.dataset.type = "mine";
-        }
-
-        const rankHTML = m.rank
-            ? `<span class="rank">${m.rank}</span>`
-            : "";
-
-        const audienceHTML = m.audience
-            ? `<p class="audience">누적 ${m.audience.toLocaleString("ko-KR")}명</p>`
-            : "";
-
-        const likedClass = likedIds.includes(m.id)
-            ? "liked"
-            : "";
+        const isLiked = likedIds.includes(m.id);
 
         card.innerHTML = `
-            <img
-                class="poster"
-                src="${posterUrl(m.poster, "w342")}"
-                alt="${m.title} 포스터"
-                loading="lazy"
-            >
+            <div class="poster-wrap">
 
-            ${rankHTML}
+                <img
+                    class="poster"
+                    src="${posterUrl(m.poster)}"
+                    alt="${m.title}"
+                    loading="lazy"
+                    onerror="this.src='https://placehold.co/400x600?text=No+Poster'"
+                >
 
-            <span class="badge">${m.rating.toFixed(1)}</span>
+                ${m.rank ? `<span class="rank">TOP ${m.rank}</span>` : ""}
+
+                ${m.rating >= 8 ? `<span class="badge">HOT</span>` : ""}
+
+            </div>
 
             <div class="info">
+
                 <h3>${m.title}</h3>
 
-                <p class="year">개봉 ${m.date}</p>
+                <p>📅 ${m.year}년</p>
 
-                ${audienceHTML}
+                <p>⭐ 평점 ${m.rating}</p>
+
+                <p>${m.overview}</p>
 
                 <button
-                    class="like ${likedClass}"
                     type="button"
-                    aria-label="찜하기"
-                    aria-pressed="${likedIds.includes(m.id)}"
+                    class="like ${isLiked ? "liked" : ""}"
+                    aria-label="좋아요"
+                    aria-pressed="${isLiked}"
                 >
-                    ♥
+                    ${isLiked ? "♥" : "♡"}
                 </button>
+
             </div>
         `;
 
         board.appendChild(card);
     }
 
-    countOutput.textContent = list.length + "편";
-
-    if (list.length === 0) {
-        board.classList.add("is-empty");
-    } else {
-        board.classList.remove("is-empty");
-    }
-
-    updateLikeCount();
-}
+    // 검색 결과가 없는 경우
+    emptyOutput.style.display = list.length === 0 ? "block" : "none";
+};
 
 
-// ========================================
-// 7. getView : 검색 → 필터 → 정렬
-// ========================================
+// 8. 통계 표시하기
 
-function getView() {
-    // 1단계 : 검색
-    const keyword = searchInput.value;
+const renderStats = list => {
+    countOutput.textContent = list.length;
 
-    let result = search(movies, keyword);
+    likeCountOutput.textContent = likedIds.length;
 
+    averageOutput.textContent = average(list).toFixed(1);
 
-    // 2단계 : 필터
-    const selectedType = typeFilter.querySelector(
-        'input[name="type"]:checked'
-    ).value;
+    const topMovie = best(list);
 
-    if (selectedType === "mine") {
-        result = result.filter(m => m.type === "mine");
-    }
-
-    if (selectedType === "boxoffice") {
-        result = result.filter(m => m.boxoffice === true);
-    }
+    bestOutput.textContent = topMovie
+        ? `${topMovie.title} (${topMovie.rating})`
+        : "-";
+};
 
 
-    // 3단계 : 정렬
-    const key = sortSelect.value;
+// 9. 화면 새로고침
 
-    const descending = key !== "title";
+const refresh = () => {
+    const view = getView();
 
-    result = sortBy(result, key, descending);
-
-    return result;
-}
-
-
-// ========================================
-// 8. refresh : 현재 조건으로 화면 다시 그리기
-// ========================================
-
-function refresh() {
-    renderCards(getView());
-}
+    renderCards(view);
+    renderStats(view);
+};
 
 
-// ========================================
-// 9. openDetail : 영화 상세 정보 표시
-// ========================================
+// 10. 상세 정보 열기
 
-function openDetail(id) {
+const openDetail = id => {
     const movie = movies.find(m => m.id === id);
 
     if (!movie) return;
@@ -287,44 +271,33 @@ function openDetail(id) {
     detailBody.innerHTML = `
         <div class="detail">
 
-            <div>
-                <img
-                    src="${posterUrl(movie.poster, "w500")}"
-                    alt="${movie.title} 포스터"
-                >
-            </div>
+            <img
+                src="${posterUrl(movie.poster)}"
+                alt="${movie.title}"
+                onerror="this.src='https://placehold.co/400x600?text=No+Poster'"
+            >
 
             <div>
                 <h2>${movie.title}</h2>
 
                 <dl>
+                    <dt>개봉 연도</dt>
+                    <dd>${movie.year}</dd>
+
                     <dt>개봉일</dt>
                     <dd>${movie.date}</dd>
 
-                    <dt>개봉 연도</dt>
-                    <dd>${movie.year}년</dd>
-
                     <dt>평점</dt>
-                    <dd>⭐ ${movie.rating.toFixed(1)}점</dd>
+                    <dd>⭐ ${movie.rating}</dd>
 
-                    <dt>영화 소개</dt>
+                    <dt>소개</dt>
                     <dd>${movie.overview}</dd>
 
-                    ${movie.audience
-                        ? `
-                            <dt>누적 관객 수</dt>
-                            <dd>${movie.audience.toLocaleString("ko-KR")}명</dd>
-                        `
-                        : ""
-                    }
+                    <dt>개봉 후 경과 연도</dt>
+                    <dd>${yearsSince(movie.year)}년</dd>
 
-                    ${movie.rank
-                        ? `
-                            <dt>박스오피스 순위</dt>
-                            <dd>${movie.rank}위</dd>
-                        `
-                        : ""
-                    }
+                    <dt>영화 종류</dt>
+                    <dd>${movie.type === "mine" ? "내가 고른 영화" : "박스오피스"}</dd>
                 </dl>
             </div>
 
@@ -332,28 +305,20 @@ function openDetail(id) {
     `;
 
     detailDialog.showModal();
-}
+};
 
 
-// ========================================
-// 10. Event Delegation : 카드 클릭 처리
-// ========================================
+// 11. 이벤트 위임 - 카드 클릭과 좋아요
 
-// .board에 이벤트 리스너 한 번만 등록
-board.addEventListener("click", function(e) {
-
-    // 실제 클릭한 요소에서 카드 찾기
+board.addEventListener("click", e => {
     const card = e.target.closest(".card");
 
     if (!card) return;
 
     const id = Number(card.dataset.id);
 
-
-    // 찜 버튼 클릭
-    const likeButton = e.target.closest(".like");
-
-    if (likeButton) {
+    // 좋아요 버튼 클릭
+    if (e.target.closest(".like")) {
         if (likedIds.includes(id)) {
             likedIds = likedIds.filter(item => item !== id);
         } else {
@@ -366,21 +331,28 @@ board.addEventListener("click", function(e) {
         return;
     }
 
-
-    // 카드 클릭 : 상세 정보 열기
+    // 카드 클릭 시 상세 정보
     openDetail(id);
 });
 
 
-// ========================================
-// 11. 이벤트 리스너 등록
-// ========================================
+// 12. 검색 이벤트
 
-// 검색 : 글자를 입력할 때마다 다시 표시
 searchInput.addEventListener("input", refresh);
 
 
-// 검색창에서 Escape : 검색어 지우기
+// 13. 정렬 이벤트
+
+sortSelect.addEventListener("change", refresh);
+
+
+// 14. 종류 필터 이벤트
+
+typeFilter.addEventListener("change", refresh);
+
+
+// 15. ESC 키로 검색 초기화
+
 searchInput.addEventListener("keydown", e => {
     if (e.key === "Escape") {
         searchInput.value = "";
@@ -389,21 +361,12 @@ searchInput.addEventListener("keydown", e => {
 });
 
 
-// 정렬 : 선택 값이 바뀌면 다시 표시
-sortSelect.addEventListener("change", refresh);
+// 16. 상세 정보 닫기
 
-
-// 필터 : 라디오 버튼이 바뀌면 다시 표시
-typeFilter.addEventListener("change", refresh);
-
-
-// 상세 창 닫기 버튼
-closeDetailButton.addEventListener("click", () => {
+closeDetail.addEventListener("click", () => {
     detailDialog.close();
 });
 
-
-// 다이얼로그 바깥쪽 클릭 시 닫기
 detailDialog.addEventListener("click", e => {
     if (e.target === detailDialog) {
         detailDialog.close();
@@ -411,30 +374,14 @@ detailDialog.addEventListener("click", e => {
 });
 
 
-// ========================================
-// 12. 페이지 처음 실행
-// ========================================
+// 17. 처음 화면 표시
 
-// 페이지 제목 설정
-document.title = "내 영화 " + movies.length + "편";
-
-
-// 영화 통계 표시
-const topMovie = best(movies);
-
-document.getElementById("out").textContent =
-    "전체 영화 " + movies.length + "편\n" +
-    "평균 평점 " + average(movies).toFixed(1) + "점\n" +
-    "최고 평점 영화: " + topMovie.title;
-
-
-// 콘솔에서 데이터 확인
-console.log("전체 영화:", movies.length + "편");
-console.log("평균 평점:", average(movies).toFixed(1));
-console.log("최고 평점:", best(movies).title);
-console.log("8점 이상:", filterByRating(movies, 8).length + "편");
-console.log("평점순 정렬:", sortByRating(movies));
-
-
-// 처음 화면 표시
 refresh();
+
+
+// 18. 콘솔 확인
+
+console.log("평균 평점:", average(movies));
+console.log("최고 평점 영화:", best(movies));
+console.log("평점 8점 이상:", filterByRating(movies, 8));
+console.log("평점순 정렬:", sortByRating(movies));
